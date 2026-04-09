@@ -8,7 +8,7 @@
 
 ## 待办事项
 - [x] 完善 Supabase 数据库模型 (Step 4)
-- [ ] 封装 Supabase 服务端客户端 (Step 5)
+- [x] 封装 Supabase 服务端客户端 (Step 5)
 - [ ] 实现分类管理页面 (Step 6)
 - [ ] 编写后端图像处理工具 (Step 7)
 - [ ] 实现上传 Server Action 闭环 (Step 8)
