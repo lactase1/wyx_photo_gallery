@@ -1,168 +1,115 @@
-# Implementation Plan (核心原型版 - 细粒度迭代)
+# Implementation Plan (核心原型版 - 深度优化迭代)
 
 说明：
-- 目标：快速交付一个视觉高品质、功能闭环的摄影作品集原型。
-- 规范：每个步骤以 `stepX` 编号，包含具体的指令与验证方法，不含具体代码。
-- 优先级：优先保证“上传-展示-详情”核心链路的稳定性与视觉极简感。
+- 目标：交付一个具备 Base64 预加载、高性能 Lightbox 和动态分类管理的专业摄影作品集。
+- 规范：每个步骤包含具体的指令与验证方法，确保技术方案闭环。
+- 关键决策：后端处理 EXIF/占位图，Middleware 路由保护，支持沉浸式交互。
 
 ---
 
-## 阶段一：基础骨架与视觉基线 (Foundation)
+## 阶段一：基础骨架与安全防线 (Foundation & Security)
 
 ### step1: 初始化 Next.js 生产环境
 - **执行指令**：
-  - 使用 `npx create-next-app@latest` 初始化项目。
-  - 选项：TypeScript (Yes), ESLint (Yes), Tailwind CSS (Yes), src/ directory (No), App Router (Yes), import alias (Yes, `@/*`)。
+  - 使用 `npx create-next-app@latest` 初始化。
+  - 选项：TypeScript, ESLint, Tailwind CSS, App Router, `@/*` 别名。
 - **验证测试**：
-  - 运行 `npm run dev`，成功访问 `http://localhost:3000`。
+  - `npm run dev` 访问成功。
 
-### step2: 安装并初始化 shadcn/ui
+### step2: 安装核心依赖包
 - **执行指令**：
-  - 运行 `npx shadcn-ui@latest init`。
-  - 配置：Style (Default), Base color (Slate), CSS variables (Yes)。
+  - 基础：`lucide-react`, `clsx`, `tailwind-merge` (shadcn 必备)。
+  - 后端处理：`exifreader`, `sharp` (用于生成 Base64 缩略图)。
+  - Supabase：`@supabase/supabase-js`, `@supabase/ssr`。
+  - 交互：`yet-another-react-lightbox` (提供键盘/手势支持)。
 - **验证测试**：
-  - 检查 `components.json` 是否生成，`lib/utils.ts` 是否存在。
+  - 检查 `package.json` 确认 `sharp` 和 `exifreader` 已安装。
 
-### step3: 强制全局深色模式与极简样式
+### step3: 强制视觉基线与 Middleware 保护
 - **执行指令**：
-  - 修改 `app/globals.css`，将背景设为纯黑 (`#000000`)，文字设为近白 (`#f8fafc`)。
-  - 在 `app/layout.tsx` 的 `html` 标签中强制添加 `className="dark"`。
-  - 移除 Next.js 默认的所有演示样式（如背景渐变）。
+  - 修改 `app/globals.css`：背景 `#000000`，文字 `#f8fafc`。
+  - 创建 `middleware.ts`：利用 Supabase Auth 保护所有以 `/admin` 开头的路由，未登录重定向至 `/login`。
 - **验证测试**：
-  - 刷新页面，确认背景为纯黑，文字为白色，无多余装饰。
-
-### step4: 安装基础依赖包
-- **执行指令**：
-  - 安装 Supabase SDK: `@supabase/supabase-js`, `@supabase/ssr`。
-  - 安装 EXIF 解析库: `exifreader`。
-  - 安装图标库: `lucide-react`。
-- **验证测试**：
-  - 检查 `package.json` 中的 `dependencies` 列表确认安装成功。
+  - 未登录状态访问 `localhost:3000/admin`，应自动跳转到登录页。
 
 ---
 
-## 阶段二：数据底层与存储 (Infrastructure)
+## 阶段二：数据底层与存储策略 (Infrastructure)
 
-### step5: 定义 Supabase 数据库模型 (SQL)
+### step4: 完善 Supabase 数据库模型
 - **执行指令**：
-  - 在 Supabase SQL Editor 执行建表脚本。
-  - 创建 `photos` 表（UUID, 标题, 分类, 缩略图URL, 原图URL, EXIF(JSONB), 描述, 状态）。
-  - 创建 `categories` 表（名称, 别名）。
-  - 创建 `comments` 和 `likes` 表。
+  - 执行 SQL 建表：
+    - `categories`: `id (uuid), name (text), slug (text), created_at`。
+    - `photos`: `id (uuid), title (text), category_id (fk), storage_path (text), exif (jsonb), blur_data_url (text), description (text), created_at`。
 - **验证测试**：
-  - 在 Supabase Dashboard 确认所有表及字段已正确创建。
+  - 在 Supabase Dashboard 确认 `blur_data_url` 字段为 `text` 类型。
 
-### step6: 配置 Storage 存储桶
+### step5: 封装 Supabase 服务端客户端
 - **执行指令**：
-  - 创建名为 `gallery` 的存储桶（Bucket）。
-  - 设置策略：管理员（Authenticated）可读写，匿名用户（Public）仅可读取。
+  - 在 `lib/supabase/` 创建 `server.ts` 和 `client.ts`（支持 SSR 和 Client Component）。
+  - 配置 `.env.local` 环境变量。
 - **验证测试**：
-  - 从 Supabase 后台手动上传一张图，并尝试通过 Public URL 访问。
-
-### step7: 封装 Supabase 客户端工具
-- **执行指令**：
-  - 在 `lib/` 下创建 `supabase/server.ts` 和 `supabase/client.ts`。
-  - 配置 `.env.local` 存储 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY`。
-- **验证测试**：
-  - 编写一个简单的 Server Component 尝试从 `photos` 表 select 数据，控制台不报错。
+  - 编写测试 API 确认能正常连接数据库。
 
 ---
 
-## 阶段三：管理端与上传逻辑 (CMS Admin)
+## 阶段三：管理端核心逻辑 (CMS Admin)
 
-### step8: 实现管理员登录页面
+### step6: 实现分类管理页面 (CRUD)
 - **执行指令**：
-  - 创建 `/login` 路由。
-  - 使用 shadcn 的 `Input` 和 `Button` 组件构建极简登录表单。
+  - 在 `/admin/categories` 创建管理页，支持新增、修改和删除分类。
 - **验证测试**：
-  - 使用 Supabase 预设账号登录，成功跳转至 `/admin`。
+  - 创建一个名为“风光”的分类，在数据库中确认记录。
 
-### step9: 实现 EXIF 提取工具函数
+### step7: 编写后端图像处理工具 (Server-Side)
 - **执行指令**：
-  - 编写 `lib/exif.ts`，接收图片文件对象，返回处理后的核心 EXIF 字段（相机、镜头、光圈、快门、ISO）。
+  - 在 `lib/image-processing.ts` 封装两个函数：
+    1. `extractExif(buffer)`: 使用 `exifreader` 提取核心参数。
+    2. `generateBlurPlaceholder(buffer)`: 使用 `sharp` 将原图缩小至 10px 并转换为 Base64 字符串。
 - **验证测试**：
-  - 传入一张带 EXIF 的本地图片，确认函数能输出预期的 JSON 格式数据。
+  - 编写单元测试或临时脚本，确认能输出以 `data:image/jpeg;base64,...` 开头的字符串。
 
-### step10: 构建单图上传表单
+### step8: 实现上传 Server Action 闭环
 - **执行指令**：
-  - 在 `/admin/upload` 创建表单。
-  - 包含：文件选择器、标题、分类下拉框（从数据库读取）、描述文本域。
+  - 编写 `uploadPhoto` Action：
+    1. 接收 FormData 中的文件。
+    2. 并行执行：上传至 Storage，提取 EXIF，生成 Base64 占位图。
+    3. 将所有元数据写入 `photos` 表。
 - **验证测试**：
-  - 页面能正常渲染，且分类下拉框中有正确选项。
-
-### step11: 实现上传 Server Action 闭环
-- **执行指令**：
-  - 编写上传 Action：1. 上传文件至 Storage -> 2. 提取 EXIF -> 3. 写入 `photos` 表。
-- **验证测试**：
-  - 提交表单上传图，在数据库中确认 EXIF 字段已自动填充。
+  - 管理端上传一张 10MB 的原图，检查数据库中 `blur_data_url` 是否有值，`exif` 是否包含相机型号。
 
 ---
 
-## 阶段四：C端展示与交互 (Public Gallery)
+## 阶段四：C端沉浸式展示 (Public Gallery)
 
-### step12: 构建响应式作品网格 (Home/Gallery)
+### step9: 构建高性能网格列表
 - **执行指令**：
-  - 在首页使用 CSS Grid 构建响应式网格。
-  - 使用 Next.js `<Image>` 组件加载缩略图，设置 `placeholder="blur"`。
+  - 在首页使用 `columns-1 md:columns-2 lg:columns-3` 瀑布流布局。
+  - 使用 Next.js `<Image>`：`src` 指向原图（带 Supabase 转换参数），`blurDataURL` 使用数据库中的 Base64 字符串，`placeholder="blur"`。
 - **验证测试**：
-  - 模拟慢速网络，确认有模糊占位图显示。
+  - 刷新页面，肉眼可见极速展示模糊图，随后渐变为清晰图。
 
-### step13: 实现分类过滤逻辑
+### step10: 实现高交互 Lightbox
 - **执行指令**：
-  - 在列表顶部增加导航组件（全部、风光、肖像）。
-  - 通过 URL 查询参数（如 `?category=landscape`）进行服务器端过滤。
+  - 集成 `yet-another-react-lightbox`。
+  - 绑定键盘事件（Esc 退出，左右键切换）。
+  - 在下方叠加显示 EXIF 浮层。
 - **验证测试**：
-  - 切换分类，确认列表刷新并显示正确结果。
-
-### step14: 实现沉浸式暗框 (Lightbox) 基础
-- **执行指令**：
-  - 使用 shadcn 的 `Dialog` 组件。
-  - 点击缩略图时，打开对话框并加载高清原图。
-- **验证测试**：
-  - 点击图片弹出层正常，点击遮罩层可关闭。
-
-### step15: EXIF 数据展示组件
-- **执行指令**：
-  - 在 Lightbox 内大图侧边或下方展示 EXIF 信息。
-  - 使用 Lucide 图标辅助展示。
-- **验证测试**：
-  - 检查光圈、快门等参数展示格式是否符合摄影师习惯（如 f/2.8, 1/200s）。
-
-### step16: “关于/器材” 静态页开发
-- **执行指令**：
-  - 创建 `/about` 路由。
-  - 采用大字号标题和窄版正文排版，列出器材清单。
-- **验证测试**：
-  - 确认移动端下文字无溢出，边距适中。
+  - 点击缩略图进入大图，使用键盘左右键顺畅切换。
 
 ---
 
-## 阶段五：互动功能与收尾 (Interactions & Deployment)
+## 阶段五：收尾与发布 (Deployment)
 
-### step17: 点赞（Like）按钮与乐观更新
+### step11: 全局极简 UI 巡检
 - **执行指令**：
-  - 在 Lightbox 中添加点赞图标。
-  - 使用 `useOptimistic` 实现点击即更新计数。
+  - 检查字体：统一使用无衬线系统字体。
+  - 检查边距：确保在大屏幕下画廊有足够的留白 (Container Max-width)。
 - **验证测试**：
-  - 点击点赞，数字立即增加，刷新页面后计数持久化。
+  - 手机端测试上传功能，确认移动端上传流程无卡顿。
 
-### step18: 轻量级评论列表
+### step12: Vercel 自动化部署
 - **执行指令**：
-  - 在 Lightbox 底部实现评论展示与输入框。
-  - 仅保留昵称和内容两个必填项。
+  - 推送代码，配置 Vercel 环境变量。
 - **验证测试**：
-  - 提交评论后，列表即时显示新记录。
-
-### step19: 响应式细节巡检
-- **执行指令**：
-  - 针对 iPad 和手机端优化网格列数。
-  - 修复 Lightbox 在小屏下的最大高度限制。
-- **验证测试**：
-  - 在 Chrome 模拟器下通过所有关键断点测试。
-
-### step20: Vercel 部署与冒烟测试
-- **执行指令**：
-  - 推送代码至 GitHub。
-  - 在 Vercel 配置 Supabase 环境变量并部署。
-- **验证测试**：
-  - 在线上环境完整测试一次“上传-展示-点赞-评论”闭环。
+  - 线上环境冒烟测试：成功上传一张照片 -> 首页刷新可见 -> 点击进入沉浸式浏览。
