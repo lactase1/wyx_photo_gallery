@@ -29,6 +29,7 @@ export async function proxy(request: NextRequest) {
     }
   )
 
+  /*
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -37,6 +38,7 @@ export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/admin') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
+  */
 
   return response
 }
