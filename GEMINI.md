@@ -45,13 +45,14 @@ npm start
 ```
 
 ## 开发规范
-0. **交流准则**：**以后必须用中文和我交流，回答我。**
+0. **交流准则**：**必须用中文和我交流，cli界面显示的都要是中文。，给我的git命令中的-m后面的也要中文**
 1. **文档驱动开发 (重要)**：
    - 编写任何代码前，必须阅读 `memory-bank/architecture.md`（包含完整的数据库 Schema）。
    - 编写任何代码前，必须阅读 `memory-bank/prd.md`和`memory-bank/tech-stack.md`。
 2. **实时进度同步**：
    - 在添加重大功能或完成里程碑后，必须更新 `memory-bank/architecture.md`。
    - 完成 Plan 中的每一个 Step 后，必须及时更新记录到 `progress.md` 和 `GEMINI.md`。
+   - 完成step的开发后，测试阶段我要手动执行的，你就告诉我如何测试，步骤是什么就行
 3. **AI 优先工作流**：架构设计高度兼容 AI 编程工具（如 Cursor, Codex, Gemini Cli）。优先使用 Next.js App Router 和服务端组件（Server Components）。
 4. **极简主义原则**：严格遵守极简 UI 设计原则。剥离冗余 UI 元素，确保影像作品是页面的视觉重心。
 5. **图像性能优化**：全站图片渲染必须使用 Next.js 的 `<Image>` 组件，以自动处理懒加载、WebP 格式转换和响应式尺寸。
