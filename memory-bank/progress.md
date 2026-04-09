@@ -2,7 +2,7 @@
 
 ## 2026-04-09: 基础环境初始化
 - [x] 初始化 Next.js 生产环境 (TypeScript, Tailwind CSS, App Router)
-- [ ] 安装核心依赖包
+- [x] 安装核心依赖包
 - [ ] 强制视觉基线与 Middleware 保护
 
 ## 待办事项
