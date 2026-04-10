@@ -4,21 +4,32 @@ import Image from 'next/image'
 import { getSupabaseImageUrl } from '@/lib/utils'
 import { useState } from 'react'
 
-interface PhotoCardProps {
-  photo: {
-    id: string
-    title?: string
-    storage_path: string
-    blur_data_url?: string
-    exif?: {
-      width?: number
-      height?: number
-      [key: string]: any
-    }
+export interface Photo {
+  id: string
+  title?: string
+  storage_path: string
+  blur_data_url?: string
+  description?: string
+  exif?: {
+    model?: string
+    make?: string
+    exposureTime?: string
+    fNumber?: string
+    iso?: string
+    focalLength?: string
+    dateTime?: string
+    lensModel?: string
+    width?: number
+    height?: number
   }
 }
 
-export function PhotoCard({ photo }: PhotoCardProps) {
+interface PhotoCardProps {
+  photo: Photo
+  onClick?: () => void
+}
+
+export function PhotoCard({ photo, onClick }: PhotoCardProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   
   // 核心瀑布流逻辑：使用原图宽高比来预留占位空间
@@ -27,7 +38,10 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   const aspectRatio = width / height
 
   return (
-    <div className="break-inside-avoid mb-4 group cursor-pointer relative overflow-hidden rounded-lg bg-zinc-900 transition-all duration-300 hover:opacity-90 active:scale-[0.98]">
+    <div 
+      className="break-inside-avoid mb-4 group cursor-pointer relative overflow-hidden rounded-lg bg-zinc-900 transition-all duration-300 hover:opacity-90 active:scale-[0.98]"
+      onClick={onClick}
+    >
       <div 
         className="relative w-full overflow-hidden" 
         style={{ aspectRatio: `${aspectRatio}` }}
