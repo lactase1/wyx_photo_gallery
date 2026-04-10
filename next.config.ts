@@ -6,8 +6,24 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '100mb',
     },
-    // 使用推荐的配置名项
+    // 将已弃用的参数替换为推荐参数
     proxyClientMaxBodySize: '100mb',
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        port: '',
+        pathname: '/storage/v1/render/image/public/**',
+      },
+    ],
   },
 };
 

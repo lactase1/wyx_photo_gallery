@@ -10,14 +10,19 @@ export interface PhotoExif {
   focalLength?: string;
   dateTime?: string;
   lensModel?: string;
+  width?: number;
+  height?: number;
 }
 
 /**
- * 从图片 Buffer 中提取核心 EXIF 参数
+ * 从图片 Buffer 中提取核心 EXIF 参数及尺寸
  */
-export function extractExif(buffer: Buffer): PhotoExif {
+export async function extractExif(buffer: Buffer): Promise<PhotoExif> {
   try {
-    const tags = ExifReader.load(buffer);
+    const [tags, metadata] = await Promise.all([
+      Promise.resolve(ExifReader.load(buffer)),
+      sharp(buffer).metadata()
+    ]);
     
     // 提取并提取描述性文本，避免复杂的对象结构
     const getTag = (name: string) => tags[name]?.description || undefined;
@@ -31,9 +36,11 @@ export function extractExif(buffer: Buffer): PhotoExif {
       focalLength: getTag('FocalLength'),
       dateTime: getTag('DateTimeOriginal') || getTag('DateTime'),
       lensModel: getTag('LensModel'),
+      width: metadata.width,
+      height: metadata.height,
     };
   } catch (error) {
-    console.error('EXIF 提取失败:', error);
+    console.error('元数据提取失败:', error);
     return {};
   }
 }

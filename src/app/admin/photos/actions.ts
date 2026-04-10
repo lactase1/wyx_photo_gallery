@@ -40,7 +40,7 @@ export async function uploadPhoto(formData: FormData): Promise<UploadPhotoRespon
 
     const [exif, blurDataUrl, uploadResult] = await Promise.all([
       // 1. 提取 EXIF
-      Promise.resolve(extractExif(buffer)),
+      extractExif(buffer),
       // 2. 生成占位图
       generateBlurPlaceholder(buffer),
       // 3. 上传到 Supabase Storage (假设存储桶名为 'photos')
