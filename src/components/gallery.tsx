@@ -51,7 +51,7 @@ export function Gallery({ photos }: GalleryProps) {
 
   return (
     <>
-      <div className="columns-1 md:columns-2 lg:columns-3 gap-4 w-full max-w-7xl mx-auto px-4 py-8">
+      <div className="columns-1 md:columns-2 lg:columns-3 gap-6 lg:gap-8 w-full max-w-7xl mx-auto px-6 py-12">
         {photos.map((photo, i) => (
           <PhotoCard 
             key={photo.id} 

@@ -27,12 +27,12 @@ export default async function Home() {
       )}
 
       {/* 极简页头 */}
-      <header className="py-12 px-6 flex flex-col items-center text-center">
-        <h1 className="text-3xl font-light tracking-[0.2em] uppercase mb-4">
+      <header className="pt-24 pb-16 px-6 flex flex-col items-center text-center">
+        <h1 className="text-4xl font-light tracking-[0.25em] uppercase mb-6">
           WYX Photo Gallery
         </h1>
-        <div className="h-[1px] w-12 bg-zinc-800 mb-6"></div>
-        <p className="text-zinc-500 text-sm max-w-md font-light leading-relaxed">
+        <div className="h-[1px] w-16 bg-zinc-800 mb-8"></div>
+        <p className="text-zinc-500 text-sm max-w-sm font-light leading-relaxed tracking-wide">
           影像之美，见于极简。
         </p>
       </header>
